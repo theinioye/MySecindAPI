@@ -6,8 +6,7 @@ export const userCreationSchema = z.object({
     email : z.string().email(),
 })
 
-export const accountCreationSchema = z.object({
-    currency : z.string().min(3).max(4), 
-    amount : z.number() ,
-    userId :z.number()  ,
+export const userUpdateSchema = z.object({
+    name : z.string().min(5).optional(),
+    email : z.string().email().optional()
 })
