@@ -1,11 +1,13 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import { prisma } from "../prisma";
+import userRouter from "./routes/userRoutes";
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
+app.use("/api/", userRouter);
 
 const port = process.env.PORT || 3000;
 
@@ -13,39 +15,18 @@ app.get("/", (req: Request, res: Response) => {
   res.send(" Express + Typescript Server");
 });
 
-app.post("/createUser", async (req: Request, res: Response) => {
-  const data = req.body;
-  const { email, name } = data;
-
-  const newUser = await prisma.user.create({
-    data: { email, name },
-  });
-
-  return res.json(newUser);
-});
-
-app.post("/createAccount", async (req: Request, res: Response) => {
-  const data = req.body;
-  const { currency, amount, userId } = data;
-
-  const newAccount = await prisma.account.create({
-    data: { currency, amount, userId },
-  });
-
-  return res.json(newAccount);
-});
-
-app.get("/users/:userId", async (req: Request, res: Response) => {
-  const { userId } = req.params;
+app.get("/users/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
 
   const user = await prisma.user.findUnique({
-    where: { id: Number(userId) },
+    where: { id: Number(id) },
+    select: { userAccounts: true },
   });
 
   if (!user) {
-    return res.status(404).json ({
-      message: "User not found"
-    })
+    return res.status(404).json({
+      message: "User not found",
+    });
   }
 
   return res.json(user);
@@ -60,15 +41,17 @@ app.get("/accounts/:accountId", async (req: Request, res: Response) => {
 
   if (!account) {
     return res.status(404).json({
-      message:"Account not found."
-    })
+      message: "Account not found.",
+    });
   }
 
   return res.json(account);
 });
 
 app.get("/users", async (req: Request, res: Response) => {
-  const userList = await prisma.user.findMany();
+  const userList = await prisma.user.findMany({
+    select: { userAccounts: true },
+  });
 
   return res.json(userList);
 });
@@ -140,6 +123,7 @@ app.delete("/accounts/:accountId", async (req: Request, res: Response) => {
 
   return res.json(deletedAccount);
 });
+
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
 });
